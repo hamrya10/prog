@@ -1,0 +1,80 @@
+package AirMap;
+/**
+ * Who wrote this anyway and what does it do?
+ */
+
+import java.awt.*;
+import java.awt.geom.*; //for some reason awt.* did not import geom
+import java.util.ArrayList;
+import javax.swing.*;
+
+
+
+
+public class AirMap extends JPanel{ 
+	
+  public static void showMap(){
+    JFrame frame = new JFrame("Flight Map");
+    AirMap map = new AirMap();
+  
+    map.setPreferredSize(new Dimension(1280,720));
+  
+    frame.getContentPane().add(map);
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);   
+    frame.pack();
+    frame.setVisible(true);
+  }
+  
+  
+  //tried changing our method to Graphics2D for more functionality but it broke the display
+  public void paintComponent(Graphics gr){ 
+    super.paintComponent(gr);
+    //found this via stackoverflow. adds Graphics2D to Graphics. Changing the actual method to paintComponent(Graphics2D etc broke the windows somewhere
+    Graphics2D g2d = (Graphics2D)gr; 
+    
+    //these only ever worked with Graphics2D. Problem was that the rotation would push it off the view area 
+    //and I can't figure out the new coordinates to reset origin
+    //g2d.scale(.75, .75); //scaling works fine though
+    //g2d.translate(-50*-5, 160*-5);
+    
+    //get a reference of the affine transform of the original coordinate system so that we can go back to it after our transform
+    AffineTransform defaultAt = g2d.getTransform();
+    // make new affine transform for rotation
+  
+    
+	//-157.922 is the lowest longtitude and 65 is our highest lat so we can use translate to shift our origin's xy
+   g2d.translate(160*13, 50*15);
+   g2d.scale(.85, .85); //scaling works too
+   
+   
+   
+   
+    // draw on the new coordinate system
+    for(int i = 0; i < Airport.Airports.size(); i++)
+    {
+    	g2d.drawString(Airport.Airports.get(i).name(),
+				Math.round(Airport.Airports.get(i).getLong())*15,
+				Math.round(Airport.Airports.get(i).getLat())*-15 //we do our vertical flip here by multiplying by a negative
+				);
+    }
+    // restore the original coordinate system (ie: origin at 0,0)
+  
+  }  
+   
+}
+
+
+Reflections:
+
+I worked with David Pham on this because neither of our partners were present during lab. He was a big help and we both used the premade files from VirginAirJava.txt from the wiki . Much of the stuff I did is commented in. 
+
+To get our actual latitude and longitude we added the following in Airport.java so that we could pull those numbers from Rik's previously created "Airports" ArrayList
+
+//add new publics so that we can pull from our array just like above
+   public float getLat() { return latitude; }
+   public float getLong() { return longitude; }
+
+
+I had issues with manually setting the origin and having to reset it after doing any sort of transformation (scaling/rotation,etc). This happens because all the g.translate calls are iterative and work on the last previously set g.translate and so it's really easy to lose what point is your origin. I fixed by casting Graphics2D to Graphics (yay inheritance) (http://stackoverflow.com/questions/5289393/casting-variables-in-java) so that I could use an AffineTransform to save and recall my original coordinates.
+
+ At one point I was stuck on doing the translations step by step and rotating, but then I realized I could just flip the map by setting my multiplier on latitude to a negative. My solution isn't the cleanest (positive values for latitude will get flipped the other way) and it has a number of overlaps but it works decently well as a start for our data set. I never could get Rik's neat function trick that he put on the board to work.
